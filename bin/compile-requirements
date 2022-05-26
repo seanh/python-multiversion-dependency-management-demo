@@ -1,0 +1,33 @@
+#!/bin/bash
+set -euo pipefail
+
+export CUSTOM_COMPILE_COMMAND="make requirements"
+export EXTRA_DEPS="pip-tools"
+
+# The requirements files need to be compiled in this fixed order because some
+# of the *.in files import other *.txt files.
+environments=(coverage dev format functests tests lint)
+
+for dir in requirements/py*; do
+    # Create empty *.txt files if they don't already exist,
+    # otherwise tox crashes.
+    for environment in "${environments[@]}"; do
+        in_file="$dir/$environment.in"
+        txt_file="$dir/$environment.txt"
+        if test -f "$in_file"; then
+            touch -a "$txt_file"
+        fi
+    done
+
+    # You need to compile prod.txt first because other *.in files import it.
+    # Also the command to compile prod.txt is different than the rest.
+    tox -e dev --run-command "pip-compile --generate-hashes --output-file $dir/prod.txt setup.cfg"
+
+    # Now compile the rest in the right order.
+    for environment in "${environments[@]}"; do
+        in_file="$dir/$environment.in"
+        if test -f "$in_file"; then
+            tox -e "$environment" --run-command "pip-compile --generate-hashes $in_file"
+        fi
+    done
+done
