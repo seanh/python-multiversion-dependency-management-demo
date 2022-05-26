@@ -1,4 +1,5 @@
 #!/bin/bash
+# FIXME: Don't use tox to compile requirements. Just pip install pip-tools in pyenv and use pyenv exec. Should be faster.
 set -euo pipefail
 
 export CUSTOM_COMPILE_COMMAND="make requirements"
