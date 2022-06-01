@@ -36,7 +36,7 @@ sure: checkformatting lint test coverage
 
 .PHONY: requirements
 requirements:
-	pyenv exec bin/compile-requirements
+	bin/make_requirements.py
 
 .PHONY: clean
 clean:

@@ -5,6 +5,5 @@ To change what versions of Python this project supports first change the
 versions in the `.python-version` file then run:
 
 ```terminal
-rm -rf requirements/py*
 make requirements
 ```
