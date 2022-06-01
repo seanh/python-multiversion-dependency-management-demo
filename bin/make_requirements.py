@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import subprocess
 import os
+import subprocess
+from functools import lru_cache
 from pathlib import Path
 from shutil import rmtree
-from functools import lru_cache
 from typing import NamedTuple
 
 
