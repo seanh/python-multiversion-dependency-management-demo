@@ -125,7 +125,7 @@ after making any changes.
 
 A couple of other things to notice:
 
-* `requirements/py*/prod.txt` is compiled from the `install_requires` dependencies in `setup.cfg`,
+* `requirements/py*/prod.txt` is compiled from the `install_requires` dependencies in `setup.cfg`
   which contains only the top-level production dependencies, unpinned.
 
   This is necessary if you want your project to be an installable Python package:
@@ -200,6 +200,32 @@ measures coverage across all versions of Python and combines the results. To
 get the full coverage report you have to run `make sure`.
 Or to run just the unit tests (not everything else):
 `tox -e '{py310,py39,py38}-tests,coverage'`.
+
+### `tox.ini`
+
+This is mostly the same as in our other projects. Some notes:
+
+* You always have to specify the version of Python when running the dev server, unit tests, or functional tests.
+  For example there's no `tox -e tests`, it's always `tox -e py310-tests`
+  (although `py310-tests` is the default envlist so just `tox` is equivalent to `tox -e py310-tests`).
+
+  This is not necessary for things that only run in one version of Python:
+  formatting, linting, and producing the coverage report are still just
+  `tox -e format,lint,coverage`.
+
+* We're *not* using the `skipsdist = true` or `skip_install = true` options.
+
+  This means that tox builds the Python package and installs it into the test
+  venv and runs the tests against the installed copy of the package, instead of
+  against the copy in the `src` dir. This is part of the reason for the `src`
+  dir layout, it protects against packaging issues (for example if you don't do
+  this the tests could be passing but the code could be depending on a file
+  that isn't actually making it into the built package, so the package would
+  actually be broken).
+
+* We *do* use `skip_install = true` for the `format`, `checkformatting` and
+  `coverage` environments because these operations don't require the package to
+  be installed.
 
 ### TODO: GitHub Actions
 
