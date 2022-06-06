@@ -251,6 +251,13 @@ This is mostly the same as in our other projects. Some notes:
   `coverage` environments because these operations don't require the package to
   be installed.
 
+* Both `make sure` and GitHub Actions use tox to run everything in parallel which is much faster.
+  I also removed the `parallel_show_output = true` that we use in our other
+  projects so that it only shows the output of any failed environments, keeps
+  the logs much shorter.
+  Also removed the `tox-pyenv` plugin because I don't think we need it and it
+  creates log noise on GitHub Actions.
+
 ### TODO: GitHub Actions
 
 ### TODO: Deal with duplication of the Python versions
