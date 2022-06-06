@@ -38,7 +38,6 @@ def pyenv_exec(command, python_version, capture_output=False):
     """Run command in the given python_version with pyenv."""
     env = {key: value for key, value in os.environ.items() if key.startswith("PYENV_")}
     env["PYENV_VERSION"] = python_version.pyenv_format
-    env["CUSTOM_COMPILE_COMMAND"] = "make requirements"
     return run([pyenv(), "exec"] + command, capture_output=capture_output, env=env)
 
 
