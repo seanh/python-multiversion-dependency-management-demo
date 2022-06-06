@@ -258,7 +258,26 @@ This is mostly the same as in our other projects. Some notes:
   Also removed the `tox-pyenv` plugin because I don't think we need it and it
   creates log noise on GitHub Actions.
 
-### TODO: GitHub Actions
+### GitHub Actions
+
+[The GitHub Actions workflow](.github/workflows/test.yml) is pretty simple
+(just 23 lines): it installs each of the versions of Python (using
+the `setup-python` action), runs `pip install tox`, and then runs
+a single tox command to run everything in parallel (formatting,
+linting, unit tests for all Python versions, coverage, functests
+for all Python versions).
+
+The other way to do this would be to use multiple GitHub Actions jobs to run
+things in parallel but that would likely be slower because each job boots its
+own VM and it would compete for a scarce resource:
+we're [limited to 60 concurrent jobs](https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration)
+across our GitHub organization.
+
+I've removed the `tox-pyenv` plugin which was unnecessary and was creating noise in the GitHub Actions logs
+("pyenv doesn't seem to be installed, you probably don't want this plugin installed either").
+And I've removed the `parallel_show_output = true` option so that it only shows
+the output from any failed environments.
+This keeps the logs much shorter.
 
 ### TODO: Deal with duplication of the Python versions
 
