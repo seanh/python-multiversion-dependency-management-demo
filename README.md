@@ -125,6 +125,23 @@ after making any changes.
 
 A couple of other things to notice:
 
+* `requirements/py*/prod.txt` is compiled from the `install_requires` dependencies in `setup.cfg`,
+  which contains only the top-level production dependencies, unpinned.
+
+  This is necessary if you want your project to be an installable Python package:
+  the dependencies need to be in the setuptools `install_requires` setting.
+  It's not possible to get the `setup.cfg` file to read the `install_requires` dependencies from a file
+  (see for example <https://github.com/pypa/setuptools/issues/1951> and <https://github.com/pypa/setuptools/issues/1074>).
+  There is [a setuptools plugin to enable it](https://pypi.org/project/setuptools-declarative-requirements/)
+  or you can hack it yourself using a `setup.py` file
+  ([example](https://github.com/ppb/ppb-vector/blob/canon/setup.py#L5-L22),
+  [another example](https://github.com/jsiverskog/pc-nrfutil/blob/fe735bbf606156bcf8222f894efcd004514cb6fe/setup.py),
+  [another example](https://stackoverflow.com/questions/49689880/proper-way-to-parse-requirements-file-after-pip-upgrade-to-pip-10-x-x/59971236#59971236)).
+  But a better approach is to go the other way: `pip-compile` can read the
+  input dependencies from a `setup.cfg` file and write out a requirements.txt
+  file with a command like this:
+  `pip-compile --output-file requirements/py310/prod.txt setup.cfg`.
+
 * The `requirements/pyXY` subdir for the first version of Python (`py310`)
   contains more requirements files than those for the other versions of Python.
   This is because we only use the first version of Python to do the formatting
@@ -134,18 +151,26 @@ A couple of other things to notice:
   Coverage is combined across all versions of Python but we only need to use
   one version of Python produce the _coverage report_, which is what
   `coverage.in` and `coverage.txt` are used for.
+
 * You can still have conditional dependencies:
   just use an environment marker like `foo ;python_version<"2.7"` in one of your
   `requirements/*.in` files. You don't need separate requirements.in files for
   each version of Python to do this.
+
 * `bin/make_requirements` runs `pip-compile` in pyenv because you need to run
   `pip-compile` with the version of Python that you're compiling for.
   But it _does not_ run `pip-compile` in tox: it's not necessary to install and
   run `pip-compile` in the actual venv.
+
 * It's not really necessary to use symlinks. `make requirements` could just *copy*
   the requirements.in files into the subdirs. But then I'd worry about Dependabot
   sending PRs that update those copied requirements.in files and get them out of
   sync with the master ones.
+
+* Unlike in our other projects, the `pip-compile` commands in `make_requirements` use
+  [`pip-compile`'s `--generate-hashes` option](https://github.com/jazzband/pip-tools#using-hashes)
+  to generate requirements.txt files using [pip's hash-checking mode](https://pip.pypa.io/en/stable/topics/secure-installs/#hash-checking-mode)
+  to protect against remote tampering and networking issues.
 
 ### Makefile
 
