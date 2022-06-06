@@ -3,6 +3,8 @@ on: [push,workflow_dispatch]
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      TOX_PARALLEL_NO_SPINNER: 1
     steps:
       - uses: actions/checkout@v3
       - name: Install Python 3.8
