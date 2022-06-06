@@ -42,12 +42,8 @@ coverage: python
 	pyenv exec tox -e coverage
 
 .PHONY: sure
-sure: checkformatting lint test functests
-	pyenv exec tox -e py39-tests
-	pyenv exec tox -e py38-tests
-	pyenv exec tox -e coverage
-	pyenv exec tox -e py39-functests
-	pyenv exec tox -e py38-functests
+sure: python
+	pyenv exec tox --parallel -e 'checkformatting,lint,py{310,39,38}-tests,coverage,py{310,39,38}-functests'
 
 .PHONY: requirements
 requirements:

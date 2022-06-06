@@ -180,11 +180,35 @@ for running the project's most common commands. Of particular interest are:
 * `make lint format test functests` runs the linting,
   code formatting, unit tests and functional tests,
   all **with the first version of Python only**.
+
 * `make sure` runs the linting, code formatting, unit tests
   and functional tests with the first version of Python only and then
   **runs the unit and functional tests with each other version of Python**,
   and also runs the coverage report (which reports the combined coverage of the
-  unit tests across all versions of Python)
+  unit tests across all versions of Python).
+
+  Unlike in our other projects, `make sure` runs everything in parallel which is much faster.
+  Unfortunately it's not possible to do this in exactly the same way for all our projects:
+  for our applications that have shared resources (database, search index) you
+  won't be able to run the tests in different versions of Python in parallel
+  because they'll be trying to use the same DB at the same time.
+
+  This could perhaps be handled by using tox's [`depends` setting](https://tox.wiki/en/latest/config.html#conf-depends).
+  Something like this should prevent tox from running more than one instance of
+  the unit tests or functests at once while still retaining as much parallelism
+  as possible:
+
+  ```ini
+  depends =
+      py310-tests: {py39,py38}-tests
+      py39-tests: {py310,py38}-tests
+      py38-tests: {py310,py39}-tests
+      py310-functests: {py39,py38}-functests
+      py39-functests: {py310,py38}-functests
+      py38-functests: {py310,py39}-functests
+      coverage: {py310,py39,py38}-tests
+  ```
+
 * `make help` prints a list of all the `make` commands
 
 Unlike our other projects the `Makefile` in this project runs tox _without_ the
