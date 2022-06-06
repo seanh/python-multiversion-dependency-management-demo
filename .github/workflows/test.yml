@@ -4,15 +4,18 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Python 3.8
-        uses: actions/setup-python@v3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
         with:
-          python-version: 3.8
-      - name: Setup Python 3.9
-        uses: actions/setup-python@v3
+          python-version: 3.10
+      - uses: actions/setup-python@v3
         with:
           python-version: 3.9
+      - uses: actions/setup-python@v3
+        with:
+          python-version: 3.8
+      - run: python --version
+      - run: python3 --version
+      - run: python3.10 --version
       - run: python3.9 --version
       - run: python3.8 --version
