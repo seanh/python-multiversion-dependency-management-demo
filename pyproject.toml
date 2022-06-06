@@ -2,6 +2,20 @@
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
 
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["python_multiversion_dependency_management_demo", "tests/unit"]
+
+[tool.coverage.paths]
+source = ["src", ".tox/*/site-packages"]
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
+fail_under = 100.00
+skip_covered = true
+
 [tool.pydocstyle]
 ignore = [
     # Missing docstrings.

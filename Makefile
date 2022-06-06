@@ -42,9 +42,10 @@ coverage: python
 	pyenv exec tox -e coverage
 
 .PHONY: sure
-sure: checkformatting lint test coverage functests
+sure: checkformatting lint test functests
 	pyenv exec tox -e py39-tests
 	pyenv exec tox -e py38-tests
+	pyenv exec tox -e coverage
 	pyenv exec tox -e py39-functests
 	pyenv exec tox -e py38-functests
 
@@ -54,7 +55,7 @@ requirements:
 
 .PHONY: clean
 clean:
-	rm -rf build dist .tox
+	rm -rf build dist .coverage .tox
 	find . -path '*/__pycache__*' -delete
 	find . -path '*.egg-info*' -delete
 
