@@ -2,8 +2,8 @@ Python Multi-version Dependency Pinning Demo
 ============================================
 
 A failed attempt to figure out how a Python project can pin its dependencies
-while also supporting multiple versions of Python, using pip-tools and
-Dependabot.
+while also supporting multiple versions of Python, using
+[pip-tools](https://pip-tools.readthedocs.io/) and Dependabot.
 
 This ultimately fails because Dependabot doesn't support compiling different
 requirements files with different versions of Python when using `pip-compile`.
@@ -362,6 +362,54 @@ across a variety of different file formats.
 
 ### Dependabot :(
 
+If you're using `pip-compile` to generate different requirements files for
+different versions of Python then you can't use Dependabot because it won't
+know which version of Python to compile which requirements file with.
+Dependabot will just compile all your requirements files with the first version
+of Python from your `.python_version` file, which will break them.
+There are lots of issues about this in Dependabot's GitHub issues, here's a couple:
+
+https://github.com/dependabot/dependabot-core/issues/4216
+https://github.com/dependabot/dependabot-core/issues/4607
+
+That's already fatal but it gets worse.
+Dependabot also doesn't understand compiling a requirements.txt file from input
+dependencies in a `setup.cfg` file:
+https://github.com/dependabot/dependabot-core/issues/1475
+
+And worse:
+pip-tools doesn't provide a solution for the problem of multiple versions of Python.
+They just [document](https://pip-tools.readthedocs.io/en/latest/#cross-environment-usage-of-requirements-in-requirements-txt-and-pip-compile)
+that pip-compile needs to be run with the right version of Python and leave it
+up to you to figure that out:
+
+> The dependencies of a package can change depending on the Python environment
+> in which it is installed. Here, we define a Python environment as the
+> combination of Operating System, Python version (3.7, 3.8, etc.), and Python
+> implementation (CPython, PyPy, etc.). For an exact definition, refer to the
+> possible combinations of PEP 508 environment markers.
+>
+> As the resulting requirements.txt can differ for each environment, users must
+> execute pip-compile on each Python environment separately to generate a
+> requirements.txt valid for each said environment...
+
+This leaves the user to invent their own scheme for how they'll lay out their
+requirements files (like the `requirements/pyXY/` subdirs in this repo) and how
+they'll handle compiling them (our `make requirements` script).
+
+Unfortunately once you've invented a custom scheme like this, Dependabot won't
+understand it. In this repo I get this error from Dependabot:
+
+> **Dependabot couldn't find a prod.txt**
+>
+> Dependabot couldn't find a prod.txt.
+>
+> Dependabot requires a prod.txt to evaluate your Python dependencies. It had
+> expected to find one at the path: /requirements/prod.txt.
+>
+> If this isn't a Python project, you may wish to disable updates for it in the
+> .github/dependabot.yml config file in this repo.
+
 ### Operating system-dependent requirements :(
 
 [PEP 508 environment markers](https://peps.python.org/pep-0508/#environment-markers)
@@ -374,5 +422,66 @@ version, etc.
 
 ### Testing against multiple versions of a library :(
 
+tox has a feature called [generate envlists](https://tox.wiki/en/latest/config.html#generating-environments-conditional-settings)
+where it can run your tests against multiple different versions of a dependency
+(or against combinations of different versions of multiple dependencies and of
+Python itself). Here's an example from tox's docs:
+
+```ini
+[tox]
+envlist = {py27,py36}-django{15,16}
+
+[testenv]
+deps =
+    pytest
+    django15: Django>=1.5,<1.6
+    django16: Django>=1.6,<1.7
+    py36: unittest2
+commands = pytest
+```
+
+I can certainly imagine why you might want to test against multiple different
+versions of a dependency but this seems incompatible with the idea of pinning
+your dependencies. A pinned `requirements.txt` file lists exact versions of all
+your dependencies (and their dependencies), whereas a generative envlist lists
+multiple different versions of one or more dependencies.
+
+So it seems that if you want to pin your dependencies you may need to give up
+the ability to test against multiple versions of a dependency?
+Or maybe there is some way to get `pip-sync` and tox to work together here?
+But it certainly feels like going against the grain.
+
 What about Pipenv and Poetry?
 -----------------------------
+
+I've heard enough reports about problems with Pipenv that I didn't seriously
+consider it.
+
+[Poetry](https://python-poetry.org/) looks really nice though and I think it
+may make it possible to support multiple versions of Python while pinning your
+dependencies and working with Dependabot.
+Pinning dependencies across multiple versions of Python is just what Poetry does,
+you don't need to invent a whole scheme of your own for compiling multiple
+requirements files like you do with `pip-compile`.
+You define the versions of Python that your project supports in the Poetry
+settings in your `pyproject.toml` file and Poetry builds a single `poetry.lock`
+file that can be used (with `poetry install`) to install your dependencies in
+any of your supported versions of Python.
+When there are differences between versions of Python (a dependency is only
+needed in some versions of Python, or different versions of a dependency are
+needed in different versions of Python) these conditionals are expressed in the
+`poetry.lock` file.
+Poetry can either export a `poetry.lock` file into a `requirements.txt` format
+that you can install with `pip` (unlike `pip-compile` Poetry generates a single
+`requirements.txt` file for all supported versions of Python: any necessary
+conditionals are compiled into the file as PEP 508 environment markers).
+And Dependabot has built-in support for Poetry. I haven't tried it but I'm guessing Dependabot
+knows how to update a `poetry.lock` file covering mulitple versions of Python.
+Unlike `pip-compile` Poetry makes this easy: all Dependabot has to do is run `poetry update`.
+
+Poetry is beyond the scope of this investigation:
+there'd be all sorts of decisions and consequences involved in moving our
+projects from `pip-tools` to Poetry (whether Poetry on its own or Poetry in
+combination with tox).
+
+Perhaps another day
