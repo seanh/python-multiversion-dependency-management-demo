@@ -7,9 +7,6 @@ branch = true
 parallel = true
 source = ["python_multiversion_dependency_management_demo", "tests/unit"]
 
-[tool.coverage.paths]
-source = ["src", ".tox/*/site-packages"]
-
 [tool.coverage.report]
 show_missing = true
 precision = 2
@@ -49,14 +46,6 @@ disable = [
     "missing-docstring",
 
     # We don't always want to have to put a `:return:` in a docstring.
-    "missing-return-doc",
-
-    # We don't always want to have to put an `:rtype:` in a docstring.
-    "missing-return-type-doc",
-
-    # We don't want to have to document the type of every parameter with a
-    # `:type:` in the docstring.
-    "missing-type-doc",
 
     # We use isort to sort and group our imports, so we don't need PyLint to
     # check them for us.
@@ -64,7 +53,6 @@ disable = [
 
     # We use Black to format our code automatically, so we don't need PyLint to
     # check formatting for us.
-    "bad-continuation",
     "line-too-long",
 
     # We use isort to sort out imports so we don't need PyLint to check import

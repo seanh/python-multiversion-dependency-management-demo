@@ -26,9 +26,9 @@ faker==13.12.1 \
     --hash=sha256:0122b75e7960cbb1e2bbbf10ef9b8c183377878e38466854953539c6d822e7c0 \
     --hash=sha256:fb95f956bac59c90f54543919d5c5ef41625e12a0773e5aa08c9b9c62ba58fb3
     # via factory-boy
-flask==1.1.4 \
-    --hash=sha256:0fbeb6180d383a9186d0d6ed954e0042ad9f18e0e8de088b2b419d526927d196 \
-    --hash=sha256:c34f04500f2cbbea882b1acb02002ad6fe6b7ffa64a6164577995657f50aed22
+flask==2.0.3 \
+    --hash=sha256:59da8a3170004800a2837844bfa84d49b022550616070f7cb1a659682b2e7c9f \
+    --hash=sha256:e1120c228ca2f553b470df4a5fa927ab66258467526069981b3eb0a91902687d
     # via -r requirements/py310/prod.txt
 h-matchers==1.2.14 \
     --hash=sha256:126b4dae28d2cef60cb86febcde3c94fa01733783ee607f5d701da9b3a9e615a \
@@ -41,15 +41,15 @@ iniconfig==1.1.1 \
     --hash=sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3 \
     --hash=sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32
     # via pytest
-itsdangerous==1.1.0 \
-    --hash=sha256:321b033d07f2a4136d3ec762eac9f16a10ccd60f53c0c91af90217ace7ba1f19 \
-    --hash=sha256:b12271b2047cb23eeb98c8b5622e2e5c5e9abd9784a153e9d8ef9cb4dd09d749
+itsdangerous==2.1.2 \
+    --hash=sha256:2c2349112351b88699d8d4b6b075022c0808887cb7ad10069318a8b0bc88db44 \
+    --hash=sha256:5dbbc68b317e5e42f327f9021763545dc3fc3bfe22e6deb96aaf1fc38874156a
     # via
     #   -r requirements/py310/prod.txt
     #   flask
-jinja2==2.11.3 \
-    --hash=sha256:03e47ad063331dd6a3f04a43eddca8a966a26ba0c5b7207a9a9e4e08f1b29419 \
-    --hash=sha256:a6d58433de0ae800347cab1fa3043cebbabe8baa9d29e668f1c768cb87a333c6
+jinja2==3.1.2 \
+    --hash=sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852 \
+    --hash=sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61
     # via
     #   -r requirements/py310/prod.txt
     #   flask
@@ -145,9 +145,9 @@ webtest==3.0.0 \
     --hash=sha256:2a001a9efa40d2a7e5d9cd8d1527c75f41814eb6afce2c3d207402547b1e5ead \
     --hash=sha256:54bd969725838d9861a9fa27f8d971f79d275d94ae255f5c501f53bb6d9929eb
     # via -r requirements/py310/functests.in
-werkzeug==1.0.1 \
-    --hash=sha256:2de2a5db0baeae7b2d2664949077c2ac63fbd16d98da0ff71837f7d1dea3fd43 \
-    --hash=sha256:6c80b1e5ad3665290ea39320b91e1be1e0d5f60652b964a3070216de83d2e47c
+werkzeug==2.1.2 \
+    --hash=sha256:1ce08e8093ed67d638d63879fd1ba3735817f7a80de3674d293f5984f25fb6e6 \
+    --hash=sha256:72a4b735692dd3135217911cbeaa1be5fa3f62bffb8745c5215420a03dc55255
     # via
     #   -r requirements/py310/prod.txt
     #   flask

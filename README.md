@@ -232,26 +232,64 @@ Some notes:
   formatting, linting, and producing the coverage report are just
   `tox -e format,lint,coverage` (which will run them with the first version in the `.python_version` file).
 
-* We're *not* using the `skipsdist = true` or `skip_install = true` options.
-
-  This means that tox builds the Python package and installs it into the test
-  venv and runs the tests against the installed copy of the package, instead of
-  against the copy in the `src` dir. This is part of the reason for the `src`
-  dir layout, it protects against packaging issues (for example if you don't do
-  this the tests could be passing but the code could be depending on a file
-  that isn't actually making it into the built package, so the package would
-  actually be broken).
-
-* We *do* use `skip_install = true` for the `format`, `checkformatting` and
-  `coverage` environments because these operations don't require the package to
-  be installed.
-
 * Both `make sure` and GitHub Actions use tox to run everything in parallel which is much faster.
 
   One nice thing about how tox does this is that by default
   (if you don't put `parallel_show_output = true` in your `tox.ini`)
   it only prints the output of any envs that failed, not the ones that succeeded.
   This makes the logs in your terminal or in GitHub Actions much shorter.
+
+* I'm using [`pip-sync`](https://pip-tools.readthedocs.io/en/latest/#example-usage-for-pip-sync)
+  to automatically update the virtualenvs whenever the requirements.txt files
+  change.
+
+  The trick here is to *not* put `-r requirements/foo.txt` lines in the `deps` section in `tox.ini`.
+  Instead just put `pip-tools` in the `deps` and then put `pip-sync
+  requirements/foo.txt` commands in the `commands_pre` section.
+  So we're relieving tox of the duty of installing and updating our
+  dependencies and calling `pip-sync` to do that for us instead:
+
+  ```tox.ini
+  deps = pip-tools
+  commands_pre =
+      lint:                     pip-sync --pip-args '--disable-pip-version-check' requirements/py310/lint.txt
+      {format,checkformatting}: pip-sync --pip-args '--disable-pip-version-check' requirements/py310/format.txt
+      coverage:                 pip-sync --pip-args '--disable-pip-version-check' requirements/py310/coverage.txt
+      py310-dev:                pip-sync --pip-args '--disable-pip-version-check' requirements/py310/dev.txt
+      ...
+  ```
+
+* Normally tox would install the package-under-test (the Python package at `src/python_multiversion_dependency_management_demo`)
+  into the virtualenv but then the `pip-sync` commands that I'm running in
+  `pre_commands` would uninstall it again!
+
+  I've hacked around this by putting `skipsdist = true` in `tox.ini`.
+  This tells tox not to build and install the package under test.
+  I then add the environment variable `PYTHONPATH = src` so that
+  the tests can `import python_multiversion_dependency_management_demo`.
+
+  This is not ideal:
+  you want tox to build the Python package and install it into the test venv
+  and run the tests against the installed copy of the package, instead of
+  against the copy in the `src` dir. This is part of the reason for the `src`
+  dir layout, it protects against packaging issues (for example if you don't do
+  this the tests could be passing but the code could be depending on a file
+  that isn't actually making it into the built package, so the package would
+  actually be broken).
+
+  So it'd be good to find a better solution to this.
+
+* Note that if I didn't have `skipsdist = true` (which implies `skip_install = true`)
+  I would want to add `skip_install = true` to `tox.ini` for the `format`,
+  `checkformatting` and `coverage` environments because these operations don't
+  require the package to be installed:
+
+  ```ini
+  [testenv]
+  skip_install =
+      {format,checkformatting,coverage}: true
+  ...
+  ```
 
 ### GitHub Actions
 
@@ -333,6 +371,8 @@ architecture, or Python implementation. To fully support these you'd not only
 need to compile a separate requirements file for each version of Python but for
 each specific environment: each combination of OS, CPU architecture, Python
 version, etc.
+
+### Testing against multiple versions of a library :(
 
 What about Pipenv and Poetry?
 -----------------------------
