@@ -1,37 +1,38 @@
 Python Multi-version Dependency Pinning Demo
 ============================================
 
-A demonstration of the problems with pinning Python dependencies while also
-supporting multiple versions of Python.
+A failed attempt to figure out how a Python project can pin its dependencies
+while also supporting multiple versions of Python, using pip-tools and
+Dependabot.
 
-TLDR: This is ultimately impossible to do with pip-tools because Dependabot
-can't understand different requirements files for different versions of Python.
-I think you could do it if you use Poetry instead of pip-tools but it would
-have other downsides.
+This ultimately fails because Dependabot doesn't support compiling different
+requirements files with different versions of Python when using `pip-compile`.
+I'm not sure it supports compiling the `prod.txt` file from `setup.cfg` (rather
+than `prod.in`) either.
+
+I think you might be able to do pinned requirements for multiple versions of
+Python if using Poetry and Dependabot rather than pip-tools, see below.
 
 How it works
 ------------
 
 ### pyenv and `make python`
 
-As with all our projects developers need to install [pyenv](https://github.com/pyenv/pyenv)
-manually and then we have a little scripting that uses pyenv to install the
-necessary versions of Python so that developers don't need to do that
-themselves:
+You need to install [pyenv](https://github.com/pyenv/pyenv) but the `Makefile`
+will handle calling pyenv to install the necessary versions of Python for you:
 
 * The [`.python-version` file](.python-version) lists all the versions of Python
-  that the project needs.
+  that the project needs
 
-* `make python` calls [`bin/make_python`](bin/make_python) (called
-  `install-python` in our other projects) which loops over all the Python
-  versions listed in the `.python-version` file and installs each version in
-  pyenv if it isn't installed already. It also installs tox in pyenv.
+* `make python` calls [`bin/make_python`](bin/make_python) which loops over all
+  the Python versions listed in the `.python-version` file and installs each
+  version in pyenv if it isn't installed already. It also installs tox in
+  pyenv
 
-One tweak I made is that the [`Makefile`](Makefile) runs `pyenv exec tox ...`
-instead of just running `tox` directly. This means that developers just have
-to have pyenv installed, they don't need to have pyenv's shell integration
-("shims") set up
-(see [Using pyenv without shims](https://github.com/pyenv/pyenv#using-pyenv-without-shims)).
+The `Makefile` then runs tox commands with `pyenv exec tox ...` instead of just
+running `tox` directly so that you don't need to have pyenv's shell integration
+("shims") set up (see
+[Using pyenv without shims](https://github.com/pyenv/pyenv#using-pyenv-without-shims)).
 
 ### `pip-compile` and `make requirements`
 
@@ -125,8 +126,9 @@ after making any changes.
 
 A couple of other things to notice:
 
-* `requirements/py*/prod.txt` is compiled from the `install_requires` dependencies in `setup.cfg`
-  which contains only the top-level production dependencies, unpinned.
+* The `requirements/py*/prod.txt` files are compiled from the
+  `install_requires` dependencies in `setup.cfg` which contains only the
+  top-level production dependencies, unpinned.
 
   This is necessary if you want your project to be an installable Python package:
   the dependencies need to be in the setuptools `install_requires` setting.
@@ -167,7 +169,7 @@ A couple of other things to notice:
   sending PRs that update those copied requirements.in files and get them out of
   sync with the master ones.
 
-* Unlike in our other projects, the `pip-compile` commands in `make_requirements` use
+* The `pip-compile` commands in `make_requirements` use
   [`pip-compile`'s `--generate-hashes` option](https://github.com/jazzband/pip-tools#using-hashes)
   to generate requirements.txt files using [pip's hash-checking mode](https://pip.pypa.io/en/stable/topics/secure-installs/#hash-checking-mode)
   to protect against remote tampering and networking issues.
@@ -187,11 +189,12 @@ for running the project's most common commands. Of particular interest are:
   and also runs the coverage report (which reports the combined coverage of the
   unit tests across all versions of Python).
 
-  Unlike in our other projects, `make sure` runs everything in parallel which is much faster.
-  Unfortunately it's not possible to do this in exactly the same way for all our projects:
-  for our applications that have shared resources (database, search index) you
-  won't be able to run the tests in different versions of Python in parallel
-  because they'll be trying to use the same DB at the same time.
+  `make sure` uses tox to run everything in parallel which is much faster.
+  This does require your different tox environments to be capable of running in
+  parallel with each other.  For example if your tests use a test database then
+  it might not be possible to run multiple instances of the tests (for
+  different versions of Python) at the same time if they're all going to be
+  using the same test DB.
 
   This could perhaps be handled by using tox's [`depends` setting](https://tox.wiki/en/latest/config.html#conf-depends).
   Something like this should prevent tox from running more than one instance of
@@ -209,33 +212,25 @@ for running the project's most common commands. Of particular interest are:
       coverage: {py310,py39,py38}-tests
   ```
 
-* `make help` prints a list of all the `make` commands
-
-Unlike our other projects the `Makefile` in this project runs tox _without_ the
-`-q` / `--quiet` argument so there's a little bit more output but users aren't
-left staring at a blank terminal while pyenv installs versions of Python or tox
-installs the project's dependencies.
-
 ### Coverage
 
 `make test coverage` will fail if you have some code that's not executed in the
 first version of Python because those lines won't be covered. The project
 measures coverage across all versions of Python and combines the results. To
-get the full coverage report you have to run `make sure`.
-Or to run just the unit tests (not everything else):
-`tox -e '{py310,py39,py38}-tests,coverage'`.
+get the full coverage report you have to run `make sure`. Or to run just the
+unit tests (not everything else): `tox -e '{py310,py39,py38}-tests,coverage'`.
 
 ### `tox.ini`
 
-This is mostly the same as in our other projects. Some notes:
+Some notes:
 
 * You always have to specify the version of Python when running the dev server, unit tests, or functional tests.
   For example there's no `tox -e tests`, it's always `tox -e py310-tests`
   (although `py310-tests` is the default envlist so just `tox` is equivalent to `tox -e py310-tests`).
 
   This is not necessary for things that only run in one version of Python:
-  formatting, linting, and producing the coverage report are still just
-  `tox -e format,lint,coverage`.
+  formatting, linting, and producing the coverage report are just
+  `tox -e format,lint,coverage` (which will run them with the first version in the `.python_version` file).
 
 * We're *not* using the `skipsdist = true` or `skip_install = true` options.
 
@@ -252,11 +247,11 @@ This is mostly the same as in our other projects. Some notes:
   be installed.
 
 * Both `make sure` and GitHub Actions use tox to run everything in parallel which is much faster.
-  I also removed the `parallel_show_output = true` that we use in our other
-  projects so that it only shows the output of any failed environments, keeps
-  the logs much shorter.
-  Also removed the `tox-pyenv` plugin because I don't think we need it and it
-  creates log noise on GitHub Actions.
+
+  One nice thing about how tox does this is that by default
+  (if you don't put `parallel_show_output = true` in your `tox.ini`)
+  it only prints the output of any envs that failed, not the ones that succeeded.
+  This makes the logs in your terminal or in GitHub Actions much shorter.
 
 ### GitHub Actions
 
@@ -272,12 +267,6 @@ things in parallel but that would likely be slower because each job boots its
 own VM and it would compete for a scarce resource:
 we're [limited to 60 concurrent jobs](https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration)
 across our GitHub organization.
-
-I've removed the `tox-pyenv` plugin which was unnecessary and was creating noise in the GitHub Actions logs
-("pyenv doesn't seem to be installed, you probably don't want this plugin installed either").
-And I've removed the `parallel_show_output = true` option so that it only shows
-the output from any failed environments.
-This keeps the logs much shorter.
 
 ### TODO: Deal with duplication of the Python versions
 
@@ -317,30 +306,33 @@ The list of Python versions is duplicated in several places:
       py38-functests: -r requirements/py38/functests.txt
   ```
 
-* The GitHub Actions workflow
+* The GitHub Actions workflow has to install each version of Python and also
+  has to mention the version in its tox command
 
-I think the way to deal with all this is by **templating** all of these files
-using cookiecutter.
+My totally untested idea for how to handle this is by templating all of these
+files using [cookiecutter](https://github.com/cookiecutter/cookiecutter).
 The single source of truth for the list of Python versions will be in the
-template variables and templates will produce `.python_version`, `Makefile`,
-`tox.ini`, and other files based on these variables.
-Changing the project's Python versions will involve changing the template
-variables (these are currently stored in a `.cookiecutter.json` file if using
-h-cookiecutter-pypackage and the `hdev template` command) and then re-running
-the cookiecutter.
+cookiecutter template variables and templates will produce `.python_version`,
+`Makefile`, `tox.ini`, and other files based on these variables.  Changing the
+project's Python versions will involve changing the template variables in the
+`cookiecutter.json` file and then re-running the cookiecutter.
 
-Allowing yourself to have repetitive, duplicative stuff in all these files
-really frees you up: the various files can be much simpler, and you're free
-from the difficult task of avoiding duplication or repetitiveness across a
-variety of different file formats.
-
-### tox-pip-sync
-
-Is broken?
+My hope is that allowing ourselves to have repetitive, duplicative stuff in all
+these files really frees you up: the various files can be much simpler, and
+you're free from the difficult task of avoiding duplication or repetitiveness
+across a variety of different file formats.
 
 ### Dependabot :(
 
 ### Operating system-dependent requirements :(
+
+[PEP 508 environment markers](https://peps.python.org/pep-0508/#environment-markers)
+can vary a package's dependencies not only depending on the version of Python
+but also depending on the operating system, operating system version, processor
+architecture, or Python implementation. To fully support these you'd not only
+need to compile a separate requirements file for each version of Python but for
+each specific environment: each combination of OS, CPU architecture, Python
+version, etc.
 
 What about Pipenv and Poetry?
 -----------------------------
